@@ -189,6 +189,26 @@ public class NetworkThread implements Runnable{
     	return angleBadGuy;
     }
     
+    public synchronized Point getClosestPalet(){
+    	
+    	double maxdist = 9999999;
+    	double dist;
+    	Point res = new Point(0,0);
+    	for (int j = 0; j <oldPalets.length; j++) 
+        {
+    		String[] oldCoord = oldPalets[j].split(";");
+        	int x = Integer.parseInt(oldCoord[1]);
+        	int y = Integer.parseInt(oldCoord[2]);
+        	dist = Math.sqrt(Math.pow(x-robot.x,2)+Math.pow(y-robot.y,2));
+        	if (dist < maxdist){
+        		maxdist = dist;
+        		res.setLocation(x, y);
+        	}
+        }
+    	return res;
+    	
+    	
+    }
     
     
     public void startPosLeft(boolean startPos){
@@ -204,6 +224,8 @@ public class NetworkThread implements Runnable{
     	return oldPalets;
     }
 
+    
+    
     public static float calculateAngle(Point robotPosition, Point target){
     	  return (float) Math.toDegrees((float)Math.atan2(target.getY()-robotPosition.getY(), target.getX()-robotPosition.getX()));
     }
