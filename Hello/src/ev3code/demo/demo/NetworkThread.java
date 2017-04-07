@@ -23,6 +23,7 @@ public class NetworkThread implements Runnable{
 	@Override
 	public void run() {
 		first = true;
+		oldPalets = new String[0];
     	bindNet();
         this.robot = new Point();
         this.badGuy = new Point();
@@ -33,7 +34,7 @@ public class NetworkThread implements Runnable{
 	}
 	
 
-    public void bindNet(){
+    public synchronized void bindNet(){
     	int port = 8888;
         // Create a socket to listen on the port.
         try {
@@ -46,7 +47,7 @@ public class NetworkThread implements Runnable{
     
     //MUST bindNet first
     
-    public void network(){
+    public synchronized void network(){
     	try 
         {
           int l = 0;
@@ -193,14 +194,14 @@ public class NetworkThread implements Runnable{
     	
     	double maxdist = 9999999;
     	double dist;
-    	Point res = new Point(0,0);
+    	Point res = new Point(-42,-42);
     	for (int j = 0; j <oldPalets.length; j++) 
         {
     		String[] oldCoord = oldPalets[j].split(";");
         	int x = Integer.parseInt(oldCoord[1]);
         	int y = Integer.parseInt(oldCoord[2]);
         	dist = Math.sqrt(Math.pow(x-robot.x,2)+Math.pow(y-robot.y,2));
-        	if (dist < maxdist){
+        	if (dist < maxdist && (Math.abs(x-robot.x) > 2 || Math.abs(y-robot.y) > 2)){
         		maxdist = dist;
         		res.setLocation(x, y);
         	}
