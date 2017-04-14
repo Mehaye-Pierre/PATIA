@@ -1,5 +1,6 @@
 package ev3code.demo.controller;
 
+import java.awt.Point;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -33,6 +34,7 @@ public class Controler {
 	protected InputHandler   input      = null;
 	protected NetworkThread net;
 	protected Thread cameraThread;
+	protected boolean left;
 	
 	private ArrayList<TImedMotor> motors     = new ArrayList<TImedMotor>();
 
@@ -45,8 +47,6 @@ public class Controler {
 		vision     = new VisionSensor();
 		screen     = new Screen();
 		input      = new InputHandler(screen);
-		NetworkThread net = new NetworkThread();
-        Thread cameraThread = new Thread( net);
 		motors.add(propulsion);
 		motors.add(graber);
 	}
@@ -73,14 +73,11 @@ public class Controler {
 				"Appuyez sur OK si la","ligne noire est à gauche",
 				"Appuyez sur tout autre", "elle est à droite");
 			if(input.isThisButtonPressed(input.waitAny(), Button.ID_ENTER)){
-				net.startPosLeft(true);
-				cameraThread.start();
-				mainLoop(true);
+				left = true;
 			}else{
-				net.startPosLeft(false);
-				cameraThread.start();
-				mainLoop(false);
+				left = false;
 			}
+			mainLoop(left);
 		}
 		cleanUp();
 	}
@@ -193,6 +190,13 @@ public class Controler {
 		boolean isAtWhiteLine = false;
 		int     nbSeek        = R2D2Constants.INIT_NB_SEEK;
 		boolean seekLeft      = initLeft;
+		
+		
+		NetworkThread net = new NetworkThread();
+        Thread cameraThread = new Thread( net);
+		net.startPosLeft(left);
+		cameraThread.start();
+		
 		//Boucle de jeu
 		while(run){
 			/*
@@ -303,7 +307,23 @@ public class Controler {
 					propulsion.volteFace(seekLeft, R2D2Constants.SEARCH_SPEED);
 					isAtWhiteLine = false;
 					break;
+				
 				case isSeeking:
+					float currentAngle = net.getAngleRobot();
+					float angle = net.getTurnAngle();
+					float finalAngle = ((currentAngle-angle)+360)%360;
+					
+					Point closestPalet = net.getClosestPalet();
+		        	if(closestPalet.getX() > -1){
+		        		if (finalAngle < 180){
+		        			// -10 pour contrer impr�cision cam�ra
+		        			propulsion.rotate(Math.max(finalAngle, 0), false, false);
+		        		}
+		        		else{
+		        			propulsion.rotate(Math.max(finalAngle, 0), true, false);
+		        		}
+		        	}
+					
 					float newDist = vision.getRaw()[0];
 					//Si la nouvelle distance est inférieure au rayonMaximum et
 					//et supérieure au rayon minimum alors

@@ -19,9 +19,13 @@ public class LineFollower2
         	Point mrRobot = net.getRobot();
         	//Point mrBadGuy = net.getOppononent();
         	Point closestPalet = net.getClosestPalet();
+        	float currentAngle = net.getAngleRobot();
+        	float angle = net.getTurnAngle();
+        	float finalAngle = ((currentAngle-angle)+360)%360;
         	if(closestPalet.getX() > -1){
-        		System.out.println("palet :"+closestPalet.getX()+" "+closestPalet.getY());
-            	System.out.println("robot :"+mrRobot.getX()+" "+mrRobot.getY());
+        		//System.out.println("palet :"+closestPalet.getX()+" "+closestPalet.getY());
+            	//System.out.println("robot :"+mrRobot.getX()+" "+mrRobot.getY());
+            	System.out.println("angle : "+ finalAngle);
         	}
         		
         	//System.out.println("robot angle :"+net.getAngleRobot());

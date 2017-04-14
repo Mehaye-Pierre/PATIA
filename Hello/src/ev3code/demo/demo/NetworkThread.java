@@ -190,6 +190,7 @@ public class NetworkThread implements Runnable{
     	return angleBadGuy;
     }
     
+    
     public synchronized Point getClosestPalet(){
     	
     	double maxdist = 9999999;
@@ -201,7 +202,7 @@ public class NetworkThread implements Runnable{
         	int x = Integer.parseInt(oldCoord[1]);
         	int y = Integer.parseInt(oldCoord[2]);
         	dist = Math.sqrt(Math.pow(x-robot.x,2)+Math.pow(y-robot.y,2));
-        	if (dist < maxdist && (Math.abs(x-robot.x) > 2 || Math.abs(y-robot.y) > 2)){
+        	if (dist < maxdist && (Math.abs(x-robot.x) > 4 || Math.abs(y-robot.y) > 4)){
         		maxdist = dist;
         		res.setLocation(x, y);
         	}
@@ -209,6 +210,10 @@ public class NetworkThread implements Runnable{
     	return res;
     	
     	
+    }
+    
+    public synchronized float getTurnAngle(){
+    	return calculateAngle(robot, getClosestPalet());
     }
     
     
@@ -219,6 +224,17 @@ public class NetworkThread implements Runnable{
     private synchronized void setAllPos(String msg){
     	oldPalets = new String[msg.split("\n").length];
         oldPalets = msg.split("\n");
+        int newsize = oldPalets.length;
+        for (int j = 0; j <oldPalets.length; j++) 
+        {
+    		String[] oldCoord = oldPalets[j].split(";");
+    		int oldx = Integer.parseInt(oldCoord[1]);
+        	int oldy = Integer.parseInt(oldCoord[2]);
+        	if((oldy < 30 || oldy > 270) && (Math.abs(oldx-robot.x) > 2 || Math.abs(oldy-robot.y) > 2)){
+        		newsize--;
+        		//TODO : find a way to remove pallet from table
+        	}
+        }
     }
     
     public synchronized String[] getAllPos(){
