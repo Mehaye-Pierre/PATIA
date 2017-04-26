@@ -302,7 +302,7 @@ public class Controler {
 		        			propulsion.rotate(Math.max(finalAngle, 0), false, false);
 		        		}
 		        		else{
-		        			propulsion.rotate(Math.max(finalAngle, 0), true, false);
+		        			propulsion.rotate(Math.max(360-finalAngle, 0), true, false);
 		        		}
 		        	}
 		        	state = States.waitEndOfRotation;
@@ -323,35 +323,14 @@ public class Controler {
 					//on a trouvé un objet à rammaser.
 					if(newDist < R2D2Constants.MAX_VISION_RANGE
 					   && newDist >= R2D2Constants.MIN_VISION_RANGE){
-						if(searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE){
-							if(unique2){
-								unique2 = false;
-							}else{
 								propulsion.stopMoving();
-								//TODO, ces 90° peuvent poser problème.
-								//Genre, dans le cas où le dernier palet de la recherche
-								//a déclenché la recherche du searchPik,
-								//du coup on risque de voir le mur.
-								//Il serait plus intéressant de faire un rotate
-								//west ou east en fonction.
-								//Mais bon, on a jamais eu le bug alors ...
 								propulsion.rotate(R2D2Constants.QUART_CIRCLE, 
 								                  seekLeft, 
 								                  R2D2Constants.SLOW_SEARCH_SPEED);
-								searchPik = newDist;
-							}
 						}else{
-							if(newDist <= searchPik){
-								searchPik = newDist;
-							}else{
-								propulsion.stopMoving();
-								unique2 = true;
-								state = States.needToGrab;
+							propulsion.stopMoving();
+							state = States.needToGrab;
 							}
-						}
-					}else{
-						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
-					}
 					break;
 				/*
 				 * Le besoin d'attraper un objet correspond au besoin de rouler
@@ -368,7 +347,7 @@ public class Controler {
 				 */
 				case isGrabing:
 					//si le temps de roulage est dépassé, s'arrêter aussi
-					if(vision.getRaw()[0] < R2D2Constants.COLLISION_DISTANCE ||
+					if(
 					   pression.isPressed()                                  ||
 					   !propulsion.isRunning()){
 						propulsion.stopMoving();

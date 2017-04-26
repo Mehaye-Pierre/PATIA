@@ -237,6 +237,7 @@ public class NetworkThread implements Runnable{
         	int oldy = Integer.parseInt(oldCoord[2]);
         	if((oldy > 20 && oldy < 280) && (Math.abs(oldx-robot.x) > 2 || Math.abs(oldy-robot.y) > 2) && (Math.abs(oldx-badGuy.x) > 2 || Math.abs(oldy-badGuy.y) > 2)){
         		tempList.add(oldPalets[j]);
+        		System.out.println("added to the list : "+oldx + " "+ oldy);
         	}
         	
         }
