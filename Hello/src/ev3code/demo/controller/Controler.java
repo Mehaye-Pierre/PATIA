@@ -164,6 +164,8 @@ public class Controler {
 		needToRelease,
 		isReleasing,
 		needToSeek,
+		rotateBeforeSeeking,
+		waitEndOfRotation,
 		isSeeking,
 		needToGrab,
 		isGrabing,
@@ -213,6 +215,7 @@ public class Controler {
 				for(TImedMotor m : motors){
 					m.checkState();
 				}
+				System.out.println(state);
 				switch (state) {
 				/*
 				 * Routine de démarrage du robot :
@@ -260,21 +263,6 @@ public class Controler {
 						if(input.escapePressed())
 							return;
 					}
-					propulsion.halfTurn(seekLeft);
-					while(propulsion.isRunning()){
-						propulsion.checkState();
-						if(input.escapePressed())
-							return;
-					}
-					propulsion.run(true);
-					while(propulsion.isRunning()){
-						propulsion.checkState();
-						if(input.escapePressed())
-							return;
-						if(color.getCurrentColor() == Color.BLACK){
-							propulsion.stopMoving();
-						}
-					}
 					/*
 					propulsion.orientateSouth(seekLeft);
 					while(propulsion.isRunning()){
@@ -284,7 +272,7 @@ public class Controler {
 					}
 					state = States.needToGrab;
 					*/
-					state = States.needToSeek;
+					state = States.rotateBeforeSeeking;
 				break;
 				/*
 				 * Le bsoin de chercher un objet nécessite d'avoir le robot
@@ -301,18 +289,12 @@ public class Controler {
 				 * attrapé pendant ce temps ou à disparu, alors il ne roulera
 				 * pas dans le vide pour rien
 				 */
-				case needToSeek:
-					state = States.isSeeking;
-					searchPik   = R2D2Constants.INIT_SEARCH_PIK_VALUE;
-					propulsion.volteFace(seekLeft, R2D2Constants.SEARCH_SPEED);
-					isAtWhiteLine = false;
-					break;
 				
-				case isSeeking:
+				case rotateBeforeSeeking:
 					float currentAngle = net.getAngleRobot();
 					float angle = net.getTurnAngle();
 					float finalAngle = ((currentAngle-angle)+360)%360;
-					
+					System.out.println("Angle : "+finalAngle);
 					Point closestPalet = net.getClosestPalet();
 		        	if(closestPalet.getX() > -1){
 		        		if (finalAngle < 180){
@@ -323,6 +305,17 @@ public class Controler {
 		        			propulsion.rotate(Math.max(finalAngle, 0), true, false);
 		        		}
 		        	}
+		        	state = States.waitEndOfRotation;
+		        	break;
+				case waitEndOfRotation:
+					if(!propulsion.isRunning())
+						state = States.isSeeking;
+					break;
+				
+				case isSeeking:
+					searchPik   = R2D2Constants.INIT_SEARCH_PIK_VALUE;
+					isAtWhiteLine = false;
+					
 					
 					float newDist = vision.getRaw()[0];
 					//Si la nouvelle distance est inférieure au rayonMaximum et
@@ -358,14 +351,6 @@ public class Controler {
 						}
 					}else{
 						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
-					}
-					if(!propulsion.isRunning() && state != States.needToGrab){
-						nbSeek   += R2D2Constants.STEPS_PER_STAGE;
-						if(nbSeek > 10){
-							run = false;
-						}
-						state    = States.needToOrientateNorthToRelease;
-						seekLeft = System.currentTimeMillis() % 2 == 0;
 					}
 					break;
 				/*
@@ -518,56 +503,18 @@ public class Controler {
 				 * Une fois l'objet rammassé, il faut se remettre en position de
 				 * trouver un autre objet.
 				 * Le robot fait une marcher arrière d'un certain temps.
-				 * Puis fera une mise en face de l'ouest
 				 */
 				case needToResetInitialSeekOrientation:
-					state = States.isResetingInitialSeekOrientation;
+					state = States.rotateBeforeSeeking;
 					if(isAtWhiteLine){
 						propulsion.runFor(R2D2Constants.HALF_SECOND*nbSeek, false);
 					}else{
 						propulsion.runFor(R2D2Constants.EMPTY_HANDED_STEP_FORWARD, false);
 					}
 					break;
-				case isResetingInitialSeekOrientation:
-					if(!propulsion.isRunning()){
-						if(seekLeft){
-							state = States.needToRotateWest;
-						} else {
-							state = States.needToRotateEast;
-						}
-						if(color.getCurrentColor()== Color.WHITE)//fin de partie
-							return;
-					}
-					break;
-				/*
-				 * Remet le robot face à l'ouest pour recommencer la recherche.
-				 * Le robot doit avoir suffisamment reculé pour être dans une
-				 * zone où il y aura des palets à ramasser.
-				 */
-				case needToRotateWest:
-					propulsion.orientateWest();
-					state = States.isRotatingToWest;
-					break;
-				case isRotatingToWest:
-					if(!propulsion.isRunning()){
-						state = States.needToSeek;
-					}
-					break;
-				/*
-				 * Remet le robot face à l'est pour recommencer la recherche.
-				 * Le robot doit avoir suffisamment reculé pour être dans une
-				 * zone où il y aura des palets à ramasser.
-				 */
-				case needToRotateEast:
-					propulsion.orientateEast();
-					state = States.isRotatingToWest;
-					break;
-				case isRotatingToEast:
-					if(!propulsion.isRunning()){
-						state = States.needToSeek;
-					}
-					break;
 				//Évite la boucle infinie
+				default:
+					break;
 				}
 				if(input.escapePressed())
 					run = false;

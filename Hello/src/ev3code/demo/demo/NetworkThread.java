@@ -4,6 +4,8 @@ import java.awt.Point;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 import lejos.hardware.Button;
 
@@ -202,11 +204,13 @@ public class NetworkThread implements Runnable{
         	int x = Integer.parseInt(oldCoord[1]);
         	int y = Integer.parseInt(oldCoord[2]);
         	dist = Math.sqrt(Math.pow(x-robot.x,2)+Math.pow(y-robot.y,2));
+        	//si le palet est trop proche, on risque de de ne pas pouvoir l'attraper et juste le pousser en tournant
         	if (dist < maxdist && (Math.abs(x-robot.x) > 4 || Math.abs(y-robot.y) > 4)){
         		maxdist = dist;
         		res.setLocation(x, y);
         	}
         }
+    	System.out.println(""+res.x+" "+res.y);
     	return res;
     	
     	
@@ -222,19 +226,22 @@ public class NetworkThread implements Runnable{
     }
     
     private synchronized void setAllPos(String msg){
+    	List<String> tempList = new ArrayList<String>();
     	oldPalets = new String[msg.split("\n").length];
-        oldPalets = msg.split("\n");
-        int newsize = oldPalets.length;
+    	oldPalets= msg.split("\n");
         for (int j = 0; j <oldPalets.length; j++) 
         {
+        	
     		String[] oldCoord = oldPalets[j].split(";");
     		int oldx = Integer.parseInt(oldCoord[1]);
         	int oldy = Integer.parseInt(oldCoord[2]);
-        	if((oldy < 30 || oldy > 270) && (Math.abs(oldx-robot.x) > 2 || Math.abs(oldy-robot.y) > 2)){
-        		newsize--;
-        		//TODO : find a way to remove pallet from table
+        	if((oldy > 20 && oldy < 280) && (Math.abs(oldx-robot.x) > 2 || Math.abs(oldy-robot.y) > 2) && (Math.abs(oldx-badGuy.x) > 2 || Math.abs(oldy-badGuy.y) > 2)){
+        		tempList.add(oldPalets[j]);
         	}
+        	
         }
+    	oldPalets = new String[tempList.size()];
+    	oldPalets = tempList.toArray(oldPalets);
     }
     
     public synchronized String[] getAllPos(){
