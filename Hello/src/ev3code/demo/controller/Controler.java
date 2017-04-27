@@ -275,21 +275,9 @@ public class Controler {
 					state = States.rotateBeforeSeeking;
 				break;
 				/*
-				 * Le bsoin de chercher un objet nécessite d'avoir le robot
-				 * orienté face à l'ouest du terrain. Le nord étant face au camp
-				 * adverse
-				 * Le robot va lancer une rotation de 180° en cherchant si un
-				 * pic de distances inférieure à 70cm apparait.
-				 * Dans ce cas, il fera une recherche du centre de l'objet et
-				 * ira l'attraper
-				 *
-				 * TODO faire en sorte que le robot n'avance pas pour une durée
-				 * indeterminée, mais qu'il avance sur un temps de référence
-				 * pour 70 cm de trajet au maximum. Comme ça, si l'objet a été
-				 * attrapé pendant ce temps ou à disparu, alors il ne roulera
-				 * pas dans le vide pour rien
+				 * Grace � la camera, on calcule l'angle vers le palet le plus proche et on se tourne vers lui
+				 * On verifie avec la camera que l'on fait face � un palet
 				 */
-				
 				case rotateBeforeSeeking:
 					float currentAngle = net.getAngleRobot();
 					float angle = net.getTurnAngle();
@@ -307,11 +295,16 @@ public class Controler {
 		        	}
 		        	state = States.waitEndOfRotation;
 		        	break;
+		        /*
+		         * On attent que le robot ai fini de tourner
+		         */
 				case waitEndOfRotation:
 					if(!propulsion.isRunning())
 						state = States.isSeeking;
 					break;
-				
+				/*
+				 * On se dirige vers le palet
+				 */
 				case isSeeking:
 					searchPik   = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					isAtWhiteLine = false;
@@ -346,7 +339,6 @@ public class Controler {
 				 * attraper l'objet.
 				 */
 				case isGrabing:
-					//si le temps de roulage est dépassé, s'arrêter aussi
 					if(
 					   pression.isPressed()                                  ||
 					   !propulsion.isRunning()){

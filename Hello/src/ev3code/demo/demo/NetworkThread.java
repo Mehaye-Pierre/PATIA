@@ -36,6 +36,9 @@ public class NetworkThread implements Runnable{
 	}
 	
 
+    /**
+     * Use to start to listen to the server
+     */
     public synchronized void bindNet(){
     	int port = 8888;
         // Create a socket to listen on the port.
@@ -48,7 +51,10 @@ public class NetworkThread implements Runnable{
     }
     
     //MUST bindNet first
-    
+    /**
+     * Fetch a new packet, and updates the map accordingly
+     * DO remember to use bindNet before calling it
+     */
     public synchronized void network(){
     	try 
         {
@@ -153,16 +159,29 @@ public class NetworkThread implements Runnable{
         }
     }
     
+    
+    /**
+     * Set the position of our robot
+     * @param r Point to set
+     */
     private synchronized void setRobot(Point r){
     	this.robot.x = r.x;
     	this.robot.y = r.y;
     }
     
+    /**
+     * Set the position of the robot of the opponents
+     * @param r Point to set
+     */
     private synchronized void setBadGuy(Point r){
     	this.badGuy.x = r.x;
     	this.badGuy.y = r.y;
     }
     
+    /**
+     * Calculate which robot is the closest to the point and updates the position of the robot
+     * @param r The point
+     */
     private synchronized void setOneRobot(Point r){
     	int distanceR = Math.abs(robot.x-r.x) + Math.abs(robot.y-r.y);
     	int distanceB = Math.abs(badGuy.x-r.x) + Math.abs(badGuy.y-r.y);
@@ -176,23 +195,39 @@ public class NetworkThread implements Runnable{
     	}
     }
     
+    /**
+     * @return the position of our robot
+     */
     public synchronized Point getRobot(){
     	return robot;
     }
     
+    /**
+     * @return the position of the opponent
+     */
     public synchronized Point getOppononent(){
     	return badGuy;
     }
     
+    /**
+     * @return the angle of our robot
+     */
     public synchronized float getAngleRobot(){
     	return angleRobot;
     }
     
+    /**
+     * @return the angle of the opponent
+     */
     public synchronized float getAngleOppononent(){
     	return angleBadGuy;
     }
     
     
+    /**
+     * Calculates the position of the palet in play the closest to our robot
+     * @return the position of the closest palet
+     */
     public synchronized Point getClosestPalet(){
     	
     	double maxdist = 9999999;
@@ -216,15 +251,25 @@ public class NetworkThread implements Runnable{
     	
     }
     
+    /**
+     * @return angle to the closest palet
+     */
     public synchronized float getTurnAngle(){
     	return calculateAngle(robot, getClosestPalet());
     }
     
     
+    /**
+     * @param startPos true if we start on the left side, else false
+     */
     public void startPosLeft(boolean startPos){
     	this.startleft = startPos;
     }
     
+    /**
+     * Updates the list of positions of all valid palets in play
+     * @param msg the latest message from the server
+     */
     private synchronized void setAllPos(String msg){
     	List<String> tempList = new ArrayList<String>();
     	oldPalets = new String[msg.split("\n").length];
@@ -237,7 +282,6 @@ public class NetworkThread implements Runnable{
         	int oldy = Integer.parseInt(oldCoord[2]);
         	if((oldy > 20 && oldy < 280) && (Math.abs(oldx-robot.x) > 2 || Math.abs(oldy-robot.y) > 2) && (Math.abs(oldx-badGuy.x) > 2 || Math.abs(oldy-badGuy.y) > 2)){
         		tempList.add(oldPalets[j]);
-        		System.out.println("added to the list : "+oldx + " "+ oldy);
         	}
         	
         }
@@ -245,12 +289,21 @@ public class NetworkThread implements Runnable{
     	oldPalets = tempList.toArray(oldPalets);
     }
     
+    /**
+     * @return the list of the valid palets in play
+     */
     public synchronized String[] getAllPos(){
     	return oldPalets;
     }
 
     
     
+    /**
+     * Calculates an angle from the position of 2 points
+     * @param robotPosition origin
+     * @param target target
+     * @return the angle
+     */
     public static float calculateAngle(Point robotPosition, Point target){
     	  return (float) Math.toDegrees((float)Math.atan2(target.getY()-robotPosition.getY(), target.getX()-robotPosition.getX()));
     }
