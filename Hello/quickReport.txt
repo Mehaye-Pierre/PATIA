@@ -1,8 +1,12 @@
+DAPP Maxime
+CHEVALIER Loic
+MEHAYE Pierre
+
 General
 
 Mise en place de deux threads :
-	Un thread principal pour les actions du robot
-	Un thread pour recevoir les informations de la camera et mettre à jour les informations
+	Un thread principal pour les actions du robot (code repris en partie de l'année dernière)
+	Un thread pour recevoir les informations de la camera et mettre à jour les informations (classe NetworkThread)
 
 
 Camera 

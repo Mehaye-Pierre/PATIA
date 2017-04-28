@@ -35,6 +35,7 @@ public class Controler {
 	protected NetworkThread net;
 	protected Thread cameraThread;
 	protected boolean left;
+	protected boolean turningLeft;
 	
 	private ArrayList<TImedMotor> motors     = new ArrayList<TImedMotor>();
 
@@ -288,9 +289,11 @@ public class Controler {
 		        		if (finalAngle < 180){
 		        			// -10 pour contrer impr�cision cam�ra
 		        			propulsion.rotate(Math.max(finalAngle, 0), false, false);
+		        			turningLeft = false;
 		        		}
 		        		else{
 		        			propulsion.rotate(Math.max(360-finalAngle, 0), true, false);
+		        			turningLeft = true;
 		        		}
 		        	}
 		        	state = States.waitEndOfRotation;
@@ -306,7 +309,6 @@ public class Controler {
 				 * On se dirige vers le palet
 				 */
 				case isSeeking:
-					searchPik   = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					isAtWhiteLine = false;
 					
 					
@@ -314,11 +316,12 @@ public class Controler {
 					//Si la nouvelle distance est inférieure au rayonMaximum et
 					//et supérieure au rayon minimum alors
 					//on a trouvé un objet à rammaser.
-					if(newDist < R2D2Constants.MAX_VISION_RANGE
-					   && newDist >= R2D2Constants.MIN_VISION_RANGE){
+					if(newDist < 0.9
+					   && newDist >= 0.1){
+								//TODO : improve
 								propulsion.stopMoving();
 								propulsion.rotate(R2D2Constants.QUART_CIRCLE, 
-								                  seekLeft, 
+								                  turningLeft, 
 								                  R2D2Constants.SLOW_SEARCH_SPEED);
 						}else{
 							propulsion.stopMoving();
@@ -330,7 +333,7 @@ public class Controler {
 				 * sur l'objet pour l'attraper dans les pinces.
 				 */
 				case needToGrab:
-					propulsion.runFor(R2D2Constants.MAX_GRABING_TIME, true);
+					propulsion.runFor(4000, true);
 					state    = States.isGrabing;
 					seekLeft = !seekLeft;
 					break;
