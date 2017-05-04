@@ -36,6 +36,9 @@ public class Controler {
 	protected Thread cameraThread;
 	protected boolean left;
 	protected boolean turningLeft;
+	protected float finalAngle;
+	protected float currentAngle;
+	protected float angle;
 	
 	private ArrayList<TImedMotor> motors     = new ArrayList<TImedMotor>();
 
@@ -216,7 +219,7 @@ public class Controler {
 				for(TImedMotor m : motors){
 					m.checkState();
 				}
-				System.out.println(state);
+				//System.out.println(state);
 				switch (state) {
 				/*
 				 * Routine de démarrage du robot :
@@ -236,7 +239,7 @@ public class Controler {
 							graber.close();
 						}
 					}
-					propulsion.rotate(R2D2Constants.ANGLE_START, seekLeft, false);
+					propulsion.rotate(15, seekLeft, false);
 					while(propulsion.isRunning() || graber.isRunning()){
 						propulsion.checkState();
 						graber.checkState();
@@ -258,21 +261,21 @@ public class Controler {
 						if(input.escapePressed())
 							return;
 					}
-					propulsion.runFor(R2D2Constants.QUARTER_SECOND, false);
+					
+					
+					propulsion.runFor(500, false);
 					while(propulsion.isRunning()){
 						propulsion.checkState();
 						if(input.escapePressed())
 							return;
 					}
-					/*
-					propulsion.orientateSouth(seekLeft);
-					while(propulsion.isRunning()){
-						propulsion.checkState();
-						if(input.escapePressed())
-							return;
-					}
-					state = States.needToGrab;
-					*/
+
+					currentAngle = net.getAngleRobot();
+					angle = net.getTurnAngle();
+					finalAngle = ((currentAngle-angle)+360)%360;
+					System.out.println("Angle : "+finalAngle);
+					System.out.println("Robot : "+net.getRobot().getX()+" "+net.getRobot().getY());
+					
 					state = States.rotateBeforeSeeking;
 				break;
 				/*
@@ -280,20 +283,19 @@ public class Controler {
 				 * On verifie avec la camera que l'on fait face � un palet
 				 */
 				case rotateBeforeSeeking:
-					float currentAngle = net.getAngleRobot();
-					float angle = net.getTurnAngle();
-					float finalAngle = ((currentAngle-angle)+360)%360;
-					System.out.println("Angle : "+finalAngle);
+					
+					
 					Point closestPalet = net.getClosestPalet();
 		        	if(closestPalet.getX() > -1){
 		        		if (finalAngle < 180){
 		        			// -10 pour contrer impr�cision cam�ra
-		        			propulsion.rotate(Math.max(finalAngle, 0), false, false);
 		        			turningLeft = false;
+		        			propulsion.rotate(Math.max(finalAngle+180-30, 0), false, false);
 		        		}
 		        		else{
-		        			propulsion.rotate(Math.max(360-finalAngle, 0), true, false);
+
 		        			turningLeft = true;
+		        			propulsion.rotate(Math.max(finalAngle-180+30, 0), true, false);
 		        		}
 		        	}
 		        	state = States.waitEndOfRotation;
@@ -313,17 +315,18 @@ public class Controler {
 					
 					
 					float newDist = vision.getRaw()[0];
-					//Si la nouvelle distance est inférieure au rayonMaximum et
-					//et supérieure au rayon minimum alors
-					//on a trouvé un objet à rammaser.
-					if(newDist < 0.9
-					   && newDist >= 0.1){
+					/*
+					 * Si on voit un objet, il s'agit normalement du palet que l'on cherche
+					 */
+					if(newDist > 1.2
+					   || newDist < 0.15){
 								//TODO : improve
 								propulsion.stopMoving();
 								propulsion.rotate(R2D2Constants.QUART_CIRCLE, 
 								                  turningLeft, 
 								                  R2D2Constants.SLOW_SEARCH_SPEED);
 						}else{
+							//vu
 							propulsion.stopMoving();
 							state = States.needToGrab;
 							}
@@ -333,7 +336,7 @@ public class Controler {
 				 * sur l'objet pour l'attraper dans les pinces.
 				 */
 				case needToGrab:
-					propulsion.runFor(4000, true);
+					propulsion.runFor(5000, true);
 					state    = States.isGrabing;
 					seekLeft = !seekLeft;
 					break;
@@ -480,11 +483,16 @@ public class Controler {
 				 */
 				case needToResetInitialSeekOrientation:
 					state = States.rotateBeforeSeeking;
-					if(isAtWhiteLine){
-						propulsion.runFor(R2D2Constants.HALF_SECOND*nbSeek, false);
-					}else{
-						propulsion.runFor(R2D2Constants.EMPTY_HANDED_STEP_FORWARD, false);
+					propulsion.runFor(1000, false);
+					while(propulsion.isRunning()){
+						propulsion.checkState();
+						if(input.escapePressed())
+							return;
 					}
+					currentAngle = net.getAngleRobot();
+					angle = net.getTurnAngle();
+					finalAngle = ((currentAngle-angle)+360)%360;
+					System.out.println("Angle : "+finalAngle);
 					break;
 				//Évite la boucle infinie
 				default:
